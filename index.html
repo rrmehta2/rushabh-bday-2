@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy 34th Birthday, Rushabh!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:   #f5c842;
+      --pink:   #ff6b9d;
+      --purple: #9b5de5;
+      --teal:   #00bbf9;
+      --coral:  #f15bb5;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a2e;
+      overflow-x: hidden;
+    }
+
+    /* ── Background layers (crossfade between questions) ── */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      background: url('images/bg.jpg') center/cover no-repeat;
+      filter: blur(8px) brightness(0.45);
+      z-index: 0;
+      transition: opacity 0.5s ease;
+    }
+    #bg2 { opacity: 0; }
+
+    /* ── Main card ── */
+    #app {
+      position: relative;
+      z-index: 10;
+      width: min(680px, 96vw);
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      overflow: visible;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; padding: 36px 32px 40px; }
+    .screen.active { display: block; text-align: center; }
+
+    /* ─────────────────────────── INTRO ─────────────────────────── */
+    #intro h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.6rem;
+      background: linear-gradient(135deg, var(--purple), var(--pink), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    #intro .age    { font-size: 1rem; color: #888; margin-bottom: 20px; }
+    #intro .tagline {
+      font-size: 1.05rem; color: #444;
+      line-height: 1.65; margin-bottom: 30px;
+    }
+    #intro .tagline strong { color: var(--purple); }
+
+    .btn-main {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: #fff;
+      border: none;
+      padding: 14px 44px;
+      border-radius: 50px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(155,93,229,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(155,93,229,0.5);
+    }
+
+    /* ─────────────────────────── QUIZ ──────────────────────────── */
+    /* photo */
+    #q-img-wrap {
+      width: 100%;
+      height: 360px;
+      border-radius: 20px 20px 0 0;
+      overflow: hidden;
+      background: #e0e0e0;
+      flex-shrink: 0;
+    }
+    #q-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      color: #bbb;
+      background: #f0f0f0;
+    }
+
+    /* quiz body */
+    #quiz-body { padding: 28px 32px 36px; }
+
+    /* progress pips */
+    #progress {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .pip {
+      flex: 1;
+      max-width: 40px;
+      height: 7px;
+      border-radius: 4px;
+      background: #e0e0e0;
+      transition: background 0.3s;
+    }
+    .pip.done    { background: var(--pink); }
+    .pip.current { background: var(--purple); }
+
+    #q-number {
+      font-size: 0.8rem;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    #q-text {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #222;
+      margin-bottom: 24px;
+    }
+
+    /* choices row — wrong button stays here, ghost holds the correct button's space */
+    #choices {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .choice-btn {
+      flex: 1;
+      max-width: 200px;
+      padding: 16px 10px;
+      border-radius: 14px;
+      border: 3px solid transparent;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+      white-space: nowrap;
+    }
+
+    .choice-btn.snowy {
+      background: #e8f6ff;
+      border-color: var(--teal);
+      color: #0077aa;
+    }
+    .choice-btn.snowy:hover {
+      background: var(--teal);
+      color: #fff;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,187,249,0.35);
+    }
+    .choice-btn.lily {
+      background: #fff0f8;
+      border-color: var(--pink);
+      color: #cc1177;
+    }
+    .choice-btn.lily:hover {
+      background: var(--pink);
+      color: #fff;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(255,107,157,0.35);
+    }
+
+    /* wrong-answer flash */
+    .wrong-flash {
+      animation: shake 0.45s ease !important;
+      background: #ffe0e0 !important;
+      border-color: #e00 !important;
+      color: #e00 !important;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+
+    /* each slot always holds space, whether showing a button or the ghost */
+    .btn-slot {
+      flex: 1;
+      max-width: 200px;
+      display: flex;
+    }
+    .btn-slot .choice-btn,
+    .btn-slot .ghost-slot {
+      width: 100%;
+    }
+
+    /* ghost slot: shows while the runaway button is floating */
+    .ghost-slot {
+      padding: 16px 10px;
+      border-radius: 14px;
+      border: 3px dashed #ddd;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      color: #ccc;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    #score-bar {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    #score-bar span { font-weight: 800; color: var(--purple); }
+
+    /* ── RUNAWAY button (position:fixed, floats over the whole page) ── */
+    #runaway-btn {
+      position: fixed;
+      z-index: 9999;
+      display: none;
+      padding: 16px 28px;
+      border-radius: 14px;
+      border: 3px solid transparent;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      /* will-change so browser composites it on its own layer */
+      will-change: left, top;
+    }
+    #runaway-btn.snowy {
+      background: #e8f6ff;
+      border-color: var(--teal);
+      color: #0077aa;
+    }
+    #runaway-btn.lily {
+      background: #fff0f8;
+      border-color: var(--pink);
+      color: #cc1177;
+    }
+
+    /* ─────────────────────────── RESULTS ───────────────────────── */
+    #results h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: var(--purple);
+      margin-bottom: 4px;
+    }
+    .confetti-emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+    .final-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5rem;
+      background: linear-gradient(135deg, var(--coral), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin: 14px 0 4px;
+    }
+    .score-label { font-size: 0.88rem; color: #aaa; margin-bottom: 28px; }
+
+    .roast-box {
+      background: linear-gradient(135deg, #fff8e1, #fff0f8);
+      border: 2px dashed var(--gold);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+    .roast-box h3 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.05rem;
+      color: #c8950a;
+      margin-bottom: 10px;
+    }
+    .roast-box p { font-size: 0.93rem; color: #555; line-height: 1.7; margin-bottom: 8px; }
+    .roast-box p:last-child { margin-bottom: 0; }
+
+    .bday-box {
+      background: linear-gradient(135deg, #f0e6ff, #ffe0f0);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .bday-box h3 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      color: var(--purple);
+      margin-bottom: 10px;
+    }
+    .bday-box p { font-size: 0.97rem; color: #444; line-height: 1.75; }
+    .bday-box .sig { margin-top: 14px; font-weight: 800; font-size: 0.95rem; color: var(--pink); }
+
+    /* ── Confetti canvas ── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+    }
+  </style>
+</head>
+<body>
+
+<div id="bg1" class="bg-layer"></div>
+<div id="bg2" class="bg-layer"></div>
+<canvas id="confetti-canvas"></canvas>
+
+
+<!-- Runaway button: floats outside the card over the whole viewport -->
+<button id="runaway-btn" onclick="catchAttempt()"></button>
+
+<div id="app">
+
+  <!-- ══════════ INTRO ══════════ -->
+  <section id="intro" class="screen active">
+    <h1>Happy Birthday,<br>Rushabh!</h1>
+    <p class="age">Turning the big 3️⃣4️⃣</p>
+    <p class="tagline">
+      You've spent 34 years claiming to be an animal lover.<br>
+      <strong>Time to prove it.</strong><br>
+      Can you tell our dogs apart?<br>
+      <small style="color:#bbb;font-size:0.8em">(You cannot.)</small>
+    </p>
+    <button class="btn-main" onclick="startQuiz()">Take the Quiz 🐾</button>
+  </section>
+
+  <!-- ══════════ QUIZ ══════════ -->
+  <section id="quiz" class="screen" style="padding:0;">
+    <div id="q-img-wrap">
+      <img id="q-img" src="" alt="Which dog?" />
+    </div>
+    <div id="quiz-body">
+      <div id="progress"></div>
+      <div id="q-number"></div>
+      <div id="q-text">Which dog is in the photo?</div>
+
+      <div id="choices">
+        <!-- Snowy always left -->
+        <div class="btn-slot">
+          <button id="btn-snowy" class="choice-btn snowy" onclick="wrongAnswer('snowy')">❄️ Snowy</button>
+          <div id="ghost-snowy" class="ghost-slot" style="display:none">❄️ Snowy 🏃</div>
+        </div>
+        <!-- Lily always right -->
+        <div class="btn-slot">
+          <button id="btn-lily" class="choice-btn lily" onclick="wrongAnswer('lily')">🌸 Lily</button>
+          <div id="ghost-lily" class="ghost-slot" style="display:none">🌸 Lily 🏃</div>
+        </div>
+      </div>
+
+      <div id="score-bar">Score: <span id="live-score">0</span> / <span id="live-total">0</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════ RESULTS ══════════ -->
+  <section id="results" class="screen">
+    <span class="confetti-emoji">🎉</span>
+    <h2>Quiz Complete!</h2>
+    <div class="final-score">0/10</div>
+    <div class="score-label">out of 10 — a truly historic performance</div>
+
+    <div class="roast-box">
+      <h3>🔥 A Gentle Roast</h3>
+      <p>
+        Rushabh, you scored <strong>0 out of 10</strong> on a quiz that had exactly
+        two possible answers. Two. Dogs. You had a fifty-fifty shot on every question
+        and still walked away empty-handed. Let that marinate for a moment.
+      </p>
+      <p>
+        In your defense, the correct button did seem to have places to be. But Snowy and Lily?
+        They've been waiting for you to learn their names for years. They're patient.
+        They're forgiving. They're also better at sitting still than you are at answering
+        a simple dog identification quiz.
+      </p>
+      <p>
+        Welcome to 34. The year you finally become aware of your limitations.
+        We're proud of you for finishing.
+      </p>
+    </div>
+
+    <div class="bday-box">
+      <h3>🎂 But Seriously — We Love You!</h3>
+      <p>
+        Happy Birthday to the one and only Rushabh! Wishing you a year full of good health,
+        great adventures, and at least one successful dog identification. You light up every room
+        and every family moment is better with you in it. We're so lucky to have you.
+      </p>
+      <p class="sig">With love — Mehta Parents, Joshi Parents, Rohit, Prachi, ❄️ Snowy &amp; 🌸 Lily</p>
+    </div>
+
+    <button class="btn-main" onclick="restartQuiz()">Try Again 😂</button>
+  </section>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION — set correct: 'snowy' or 'lily' for each image
+// ═══════════════════════════════════════════════════════════════
+const questions = [
+  { img: 'images/q01.jpg', correct: 'snowy' },
+  { img: 'images/q02.jpg', correct: 'lily'  },
+  { img: 'images/q03.jpg', correct: 'snowy' },
+  { img: 'images/q04.jpg', correct: 'lily'  },
+  { img: 'images/q05.jpg', correct: 'snowy' },
+  { img: 'images/q06.jpg', correct: 'lily'  },
+  { img: 'images/q07.jpg', correct: 'snowy' },
+  { img: 'images/q08.jpg', correct: 'lily'  },
+  { img: 'images/q09.jpg', correct: 'snowy' },
+  { img: 'images/q10.jpg', correct: 'lily'  },
+];
+
+const LABELS = {
+  snowy: '❄️ Snowy',
+  lily:  '🌸 Lily',
+};
+
+// ──────────────────────────────────────────────────────────────
+let current = 0;
+let activeBgLayer = 1;
+
+
+function updateBackground(imgUrl) {
+  const next    = activeBgLayer === 1 ? 2 : 1;
+  const nextEl  = document.getElementById(`bg${next}`);
+  const prevEl  = document.getElementById(`bg${activeBgLayer}`);
+  nextEl.style.backgroundImage = `url('${imgUrl}')`;
+  nextEl.style.opacity = '1';
+  prevEl.style.opacity = '0';
+  activeBgLayer = next;
+}
+
+function startQuiz() {
+  current = 0;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q         = questions[current];
+  const correctId = q.correct;
+  const wrongId   = correctId === 'snowy' ? 'lily' : 'snowy';
+
+  // Progress pips
+  const prog = document.getElementById('progress');
+  prog.innerHTML = '';
+  for (let i = 0; i < questions.length; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'pip' + (i < current ? ' done' : i === current ? ' current' : '');
+    prog.appendChild(pip);
+  }
+
+  document.getElementById('q-number').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('live-score').textContent = '0';
+  document.getElementById('live-total').textContent = current;
+
+  // Photo — also push to full-window background
+  document.getElementById('q-img').src = q.img;
+  updateBackground(q.img);
+
+  // Wrong button: visible in its fixed slot
+  document.getElementById(`btn-${wrongId}`).style.display = '';
+  document.getElementById(`ghost-${wrongId}`).style.display = 'none';
+
+  // Correct button: hide from card, show ghost placeholder
+  document.getElementById(`btn-${correctId}`).style.display = 'none';
+  const ghostEl = document.getElementById(`ghost-${correctId}`);
+  ghostEl.style.display = 'flex';
+
+  // Runaway button: style it, then position it exactly over the ghost slot
+  const runaway = document.getElementById('runaway-btn');
+  runaway.className = `choice-btn ${correctId}`;
+  runaway.textContent = LABELS[correctId];
+  runaway.style.display = 'block';
+
+  // Wait one frame so the ghost slot has its final layout position
+  requestAnimationFrame(() => {
+    const rect = ghostEl.getBoundingClientRect();
+    btnW  = rect.width;
+    btnH  = rect.height;
+    btnCX = rect.left + rect.width  / 2;
+    btnCY = rect.top  + rect.height / 2;
+    runaway.style.width  = rect.width  + 'px';
+    runaway.style.height = rect.height + 'px';
+    runaway.style.left   = rect.left   + 'px';
+    runaway.style.top    = rect.top    + 'px';
+
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+//  Wrong-answer click
+// ──────────────────────────────────────────────────────────────
+function wrongAnswer(id) {
+  const btn = document.getElementById(`btn-${id}`);
+  btn.classList.add('wrong-flash');
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.classList.remove('wrong-flash');
+    btn.disabled = false;
+    advance();
+  }, 480);
+}
+
+// If they click the runaway button — nudge it just out of reach, never count as a click
+function catchAttempt() {
+  const btn  = document.getElementById('runaway-btn');
+  const dx   = btnCX - mouseX || 1;
+  const dy   = btnCY - mouseY || 0;
+  const dist = Math.hypot(dx, dy) || 1;
+  btnCX = Math.max(EDGE + btnW/2, Math.min(window.innerWidth  - btnW/2 - EDGE, mouseX + (dx/dist) * MIN_DIST));
+  btnCY = Math.max(EDGE + btnH/2, Math.min(window.innerHeight - btnH/2 - EDGE, mouseY + (dy/dist) * MIN_DIST));
+  btn.style.left = Math.round(btnCX - btnW/2) + 'px';
+  btn.style.top  = Math.round(btnCY - btnH/2) + 'px';
+}
+
+function advance() {
+  current++;
+  document.getElementById('live-total').textContent = current;
+  if (current >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  hideRunaway();
+  showScreen('results');
+  launchConfetti();
+}
+
+function restartQuiz() {
+  stopConfetti();
+  startQuiz();
+}
+
+function hideRunaway() {
+  document.getElementById('runaway-btn').style.display = 'none';
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  if (id !== 'quiz') hideRunaway();
+}
+
+// ──────────────────────────────────────────────────────────────
+//  Runaway button — only moves when cursor is actively chasing it,
+//  always outruns the cursor so it can never be clicked
+// ──────────────────────────────────────────────────────────────
+const EDGE            =  20;   // min gap from viewport edge
+const MIN_DIST        = 110;   // reference: if closer than this it's cornered
+const ACTIVATION      = 220;   // only react within this radius
+const FLEE_MULTIPLIER = 2.8;   // flee at this multiple of the approach speed
+const MIN_FLEE_PX     =   3;   // minimum flee px/frame when chasing is detected
+const CORNER_THRESH   = 0.70;  // fraction of MIN_DIST — below this = cornered
+const TELEPORT_DELAY  = 350;   // ms cooldown between teleports
+
+// Button dimensions — updated from real DOM rect after first placement
+let btnW = 160, btnH = 56;
+
+// Button CENTER position
+let btnCX = 0, btnCY = 0;
+
+let mouseX    = window.innerWidth  / 2;
+let mouseY    = window.innerHeight / 2;
+let prevMouseX = mouseX;
+let prevMouseY = mouseY;
+let lastTeleport = 0;
+
+document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+document.addEventListener('touchmove', (e) => {
+  mouseX = e.touches[0].clientX;
+  mouseY = e.touches[0].clientY;
+}, { passive: true });
+
+function teleportRandom() {
+  const btn    = document.getElementById('runaway-btn');
+  const margin = EDGE + 4;
+  let x, y, attempts = 0;
+  do {
+    x = margin + Math.random() * (window.innerWidth  - btnW - margin * 2);
+    y = margin + Math.random() * (window.innerHeight - btnH - margin * 2);
+    attempts++;
+  } while (Math.hypot(x + btnW/2 - mouseX, y + btnH/2 - mouseY) < MIN_DIST * 2.5 && attempts < 25);
+
+  btnCX = x + btnW / 2;
+  btnCY = y + btnH / 2;
+  btn.style.left = x + 'px';
+  btn.style.top  = y + 'px';
+  lastTeleport   = performance.now();
+}
+
+function runLoop() {
+  requestAnimationFrame(runLoop);
+
+  const btn = document.getElementById('runaway-btn');
+  if (!btn || btn.style.display === 'none') return;
+
+  // Mouse velocity this frame (px)
+  const mvX = mouseX - prevMouseX;
+  const mvY = mouseY - prevMouseY;
+  prevMouseX = mouseX;
+  prevMouseY = mouseY;
+
+  const dx   = btnCX - mouseX;
+  const dy   = btnCY - mouseY;
+  const dist = Math.hypot(dx, dy) || 0.01;
+
+  if (dist > ACTIVATION) return;
+
+  // How fast cursor is closing in (px/frame, positive = approaching)
+  const approach = mvX * (dx / dist) + mvY * (dy / dist);
+
+  // Only flee when cursor is actively moving toward the button
+  if (approach < 0.3) return;
+
+  // Flee directly away at FLEE_MULTIPLIER × approach speed
+  const fleeSpeed = Math.min(approach * FLEE_MULTIPLIER, 40);
+  const nx = dx / dist;
+  const ny = dy / dist;
+
+  let newCX = btnCX + nx * Math.max(fleeSpeed, MIN_FLEE_PX);
+  let newCY = btnCY + ny * Math.max(fleeSpeed, MIN_FLEE_PX);
+
+  // Clamp to viewport
+  const clampedCX = Math.max(EDGE + btnW/2, Math.min(window.innerWidth  - btnW/2 - EDGE, newCX));
+  const clampedCY = Math.max(EDGE + btnH/2, Math.min(window.innerHeight - btnH/2 - EDGE, newCY));
+
+  btnCX = clampedCX;
+  btnCY = clampedCY;
+  btn.style.left = Math.round(btnCX - btnW/2) + 'px';
+  btn.style.top  = Math.round(btnCY - btnH/2) + 'px';
+
+  // Cornered: clamped AND cursor too close → teleport
+  const now = performance.now();
+  if (
+    (newCX !== clampedCX || newCY !== clampedCY) &&
+    dist < MIN_DIST * CORNER_THRESH &&
+    now - lastTeleport > TELEPORT_DELAY
+  ) {
+    teleportRandom();
+  }
+}
+
+runLoop();
+
+// ──────────────────────────────────────────────────────────────
+//  Confetti
+// ──────────────────────────────────────────────────────────────
+let confettiRaf = null;
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#f5c842','#ff6b9d','#9b5de5','#00bbf9','#f15bb5','#06d6a0'];
+  const pieces = Array.from({ length: 130 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 300,
+    r: 4 + Math.random() * 7,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    dx: (Math.random() - 0.5) * 3,
+    dy: 2 + Math.random() * 4,
+    rot: Math.random() * 360,
+    drot: (Math.random() - 0.5) * 5,
+    rect: Math.random() > 0.5,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of pieces) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      if (p.rect) { ctx.fillRect(-p.r, -p.r * 0.5, p.r * 2, p.r); }
+      else         { ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+      p.x += p.dx;
+      p.y += p.dy;
+      p.rot += p.drot;
+      if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+    }
+    confettiRaf = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopConfetti() {
+  if (confettiRaf) { cancelAnimationFrame(confettiRaf); confettiRaf = null; }
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+</script>
+</body>
+</html>
